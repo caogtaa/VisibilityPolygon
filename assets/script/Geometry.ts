@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-24 21:02:15
+ * LastEditTime: 2021-02-25 00:33:40
 */
 
 
@@ -79,7 +79,18 @@ export default class Geometry {
 
 	// 判断线段p1->q1和线段p2->q2是否相交
 	public static IsSegmentIntersect(p1: cc.Vec2, q1: cc.Vec2, p2: cc.Vec2, q2: cc.Vec2): boolean {
-		return this.Orientation(p1, q1, p2) !== this.Orientation(p1, q1, q2) &&
-			this.Orientation(p2, q2, p1) !== this.Orientation(p2, q2, q1);
+        let eps = this._epsilon;
+
+        // 先对AABB是否碰撞做快速检测
+        if (Math.max(p1.x, q1.x) + eps < Math.min(p2.x, q2.x) ||
+            Math.max(p2.x, q2.x) + eps < Math.min(p1.x, q1.x) ||
+            Math.max(p1.y, q1.y) + eps < Math.min(p2.y, q2.y) ||
+            Math.max(p2.y, q2.y) + eps < Math.min(p1.y, q1.y))
+            return false;
+
+        // 检测线段A顶点在线段B的两侧，反之亦然
+        // 一旦出现共线的情况，结合上面AABB测试结果，可以认定有交点
+		return this.Orientation(p1, q1, p2) * this.Orientation(p1, q1, q2) <= 0 &&
+			this.Orientation(p2, q2, p1) * this.Orientation(p2, q2, q1) <= 0;
 	}
 }

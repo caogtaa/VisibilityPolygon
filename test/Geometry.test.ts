@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 00:01:31
+ * LastEditTime: 2021-02-25 00:35:31
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -78,3 +78,45 @@ describe("Geometry.Orientation", () => {
     });
 });
 
+describe("Geometry.IsSegmentIntersect", () => {
+    test("connected by endpoint", () => {
+        expect(Geometry.IsSegmentIntersect(
+            cc.v2(-1, -1),
+            cc.v2(250.5, 300),
+            cc.v2(250.5, 300),
+            cc.v2(900, 1000)
+        ))
+        .toBe(true);
+    });
+
+    test("overlapped", () => {
+        expect(Geometry.IsSegmentIntersect(
+            cc.v2(-1, -1),
+            cc.v2(250.5, 250.5),
+            cc.v2(-1, -1),
+            cc.v2(900, 900)
+        ))
+        .toBe(true);
+    });
+
+    test("collinear but disjoint", () => {
+        expect(Geometry.IsSegmentIntersect(
+            cc.v2(-1, -1),
+            cc.v2(100, 100),
+            cc.v2(101, 101),
+            cc.v2(900, 900)
+        ))
+        .toBe(false);
+    });
+
+    test("parallel", () => {
+        // 第1条线段y-1平移得到第2条线段
+        expect(Geometry.IsSegmentIntersect(
+            cc.v2(-1, -1),
+            cc.v2(250.5, 250.5),
+            cc.v2(-1, -2),
+            cc.v2(250.5, 249.5)
+        ))
+        .toBe(false);
+    });
+});
