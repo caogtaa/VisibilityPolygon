@@ -213,6 +213,7 @@ VisibilityPolygon.inPolygon = function(position, polygon) {
 	var edge = [val-1, val-1];
 
 	// parity保存射线和多边形相交次数，用于判定顶点是否在多边形内部
+	// 很显然这种方式比用水平射线检测要复杂
 	var parity = 0;
 
 	for (var i = 0; i < polygon.length; ++i) {
@@ -221,7 +222,7 @@ VisibilityPolygon.inPolygon = function(position, polygon) {
 		var j = i + 1;
 		if (j == polygon.length) j = 0;
 
-
+		// 发现射线和边相交后，为了识别一些特殊情况，还进行了多次atan运算，效率属实低下
 		if (VisibilityPolygon.doLineSegmentsIntersect(edge[0], edge[1], position[0], position[1], polygon[i][0], polygon[i][1], polygon[j][0], polygon[j][1])) {
 			var intersect = VisibilityPolygon.intersectLines(edge, position, polygon[i], polygon[j]);
 			if (VisibilityPolygon.equal(position, intersect)) return true;

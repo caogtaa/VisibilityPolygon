@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 00:33:40
+ * LastEditTime: 2021-02-25 01:28:44
 */
 
 
@@ -80,12 +80,14 @@ export default class Geometry {
 	// 判断线段p1->q1和线段p2->q2是否相交
 	public static IsSegmentIntersect(p1: cc.Vec2, q1: cc.Vec2, p2: cc.Vec2, q2: cc.Vec2): boolean {
         let eps = this._epsilon;
+        let max = Math.max;
+        let min = Math.min;
 
         // 先对AABB是否碰撞做快速检测
-        if (Math.max(p1.x, q1.x) + eps < Math.min(p2.x, q2.x) ||
-            Math.max(p2.x, q2.x) + eps < Math.min(p1.x, q1.x) ||
-            Math.max(p1.y, q1.y) + eps < Math.min(p2.y, q2.y) ||
-            Math.max(p2.y, q2.y) + eps < Math.min(p1.y, q1.y))
+        if (max(p1.x, q1.x) + eps < min(p2.x, q2.x) ||
+            max(p2.x, q2.x) + eps < min(p1.x, q1.x) ||
+            max(p1.y, q1.y) + eps < min(p2.y, q2.y) ||
+            max(p2.y, q2.y) + eps < min(p1.y, q1.y))
             return false;
 
         // 检测线段A顶点在线段B的两侧，反之亦然
@@ -93,4 +95,50 @@ export default class Geometry {
 		return this.Orientation(p1, q1, p2) * this.Orientation(p1, q1, q2) <= 0 &&
 			this.Orientation(p2, q2, p1) * this.Orientation(p2, q2, q1) <= 0;
 	}
+
+    // 判断线段p1->q1是否和从o点向左发射射线相交
+    // 和顶点相交是特殊情况，这里只认和线段y坐标比较大的顶点相交的情况，避免重复计算
+    // o点在线段上的情况认为相交
+    // 由于o点在多边形左侧边上时，会被判定为不在多边形内部
+    // 为了解决这个对称性问题，请在射线检测法前先判断点是否在某一边上，如果是则直接判为在多边形内部
+    // 在游戏运行期间要避免viewpoint刚好处于某条边上（通过碰撞检测预防这一帧发生）
+    protected static IsRayIntersect(o: cc.Vec2, p1: cc.Vec2, q1: cc.Vec2): boolean {
+        let eps = this._epsilon;
+
+        // 保证b是线段两个点里y较小的
+        let b = p1, t = q1;
+        if (b.y > t.y) {
+            b = q1;
+            t = p1;
+        }
+
+        let oy = o.y;
+        // b.y < oy <= t.y (oy在线段y区间内且不能碰到低点y)
+        // o必须处于bt线段右侧
+        return b.y + eps < oy && oy - t.y <= eps
+            && this.Orientation(b, t, o) == EOrientation.RIGHT_TURN;
+	}
+
+    public static IsPointInPolygon(o: cc.Vec2, polygon: cc.Vec2[]): boolean {
+        let i = 0, k = 1, n = polygon.length;
+        let acc = 0;
+        for (; i < n; ++i, ++k) {
+            if (k == n)
+                k = 0;
+
+            // 判断点和线段pi->pk的关系
+            let pi = polygon[i];
+            let pk = polygon[k];
+            if (this.IsOnSegment(o, pi, pk)) {
+                // 在边上则直接认为在多边形内部
+                return true;
+            }
+
+            if (this.IsRayIntersect(o, pi, pk)) {
+                ++ acc;
+            }
+        }
+
+        return acc % 2 === 1;
+    }
 }

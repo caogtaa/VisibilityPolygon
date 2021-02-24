@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 00:35:31
+ * LastEditTime: 2021-02-25 01:40:42
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -116,6 +116,98 @@ describe("Geometry.IsSegmentIntersect", () => {
             cc.v2(250.5, 250.5),
             cc.v2(-1, -2),
             cc.v2(250.5, 249.5)
+        ))
+        .toBe(false);
+    });
+});
+
+describe("Geometry.IsPointInPolygon", () => {
+    test("inside test 1", () => {
+        // case data:
+        // https://doc.cgal.org/latest/Visibility_2/index.html
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(0.5, 2),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(true);
+    });
+
+    test("inside test 2", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(3.5, 2.5),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(true);
+    });
+
+    test("left side", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(-0.5, 2),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("right side", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(5.1, 2),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("outside but in concave", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(1, 3),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("upward", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(5.1, 2),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("on edge", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(4, 1),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(true);
+    });
+
+    test("on vertex", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(1, 2),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(true);
+    });
+
+    test("same max y", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(5, 4),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("same min y", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(9, 0),
+            [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
+        ))
+        .toBe(false);
+    });
+
+    test("edge parallel with x", () => {
+        expect(Geometry.IsPointInPolygon(
+            cc.v2(4, 4),
+            [cc.v2(0, 0), cc.v2(0, 3), cc.v2(3, 3), cc.v2(3, 0)]
         ))
         .toBe(false);
     });
