@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-24 20:32:21
+ * LastEditTime: 2021-02-24 21:02:15
 */
 
 
@@ -83,5 +83,3 @@ export default class Geometry {
 			this.Orientation(p2, q2, p1) !== this.Orientation(p2, q2, q1);
 	}
 }
-
-module.exports = Geometry;

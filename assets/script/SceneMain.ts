@@ -1,9 +1,11 @@
 /*
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2021-02-24 18:19:38
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-02-24 20:45:45
 */
+
+import Geometry from "./Geometry";
 
 //@ts-ignore
 const VisibilityPolygon = require("./visibility_polygon.js");
