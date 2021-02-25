@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 01:40:42
+ * LastEditTime: 2021-02-25 18:41:04
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -14,7 +14,7 @@ npm i jest-canvas-mock -D
 */
 // vscode插件安装Jest、Jest Test Explorer
 
-import Geometry, { EOrientation } from "../assets/script/Geometry";
+import Geometry, { AngleComparer, EOrientation } from "../assets/script/Geometry";
 
 describe("Geometry.add", () => {
     test("simple add", () => {
@@ -188,7 +188,7 @@ describe("Geometry.IsPointInPolygon", () => {
         .toBe(true);
     });
 
-    test("same max y", () => {
+    test("outside with same max y", () => {
         expect(Geometry.IsPointInPolygon(
             cc.v2(5, 4),
             [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
@@ -196,7 +196,7 @@ describe("Geometry.IsPointInPolygon", () => {
         .toBe(false);
     });
 
-    test("same min y", () => {
+    test("outside with same min y", () => {
         expect(Geometry.IsPointInPolygon(
             cc.v2(9, 0),
             [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)]
@@ -204,11 +204,60 @@ describe("Geometry.IsPointInPolygon", () => {
         .toBe(false);
     });
 
-    test("edge parallel with x", () => {
+    test("edge parallel with x axis", () => {
         expect(Geometry.IsPointInPolygon(
             cc.v2(4, 4),
             [cc.v2(0, 0), cc.v2(0, 3), cc.v2(3, 3), cc.v2(3, 0)]
         ))
         .toBe(false);
+    });
+});
+
+describe("Geometry.AngleComparer.Cmp", () => {
+    test("left & right", () => {
+        // 右半平面先被扫描到
+        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
+    });
+
+    test("left & y", () => {
+        // y轴（沿参考点向上）先被扫描到
+        expect(new AngleComparer(cc.v2(100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
+    });
+
+    test("y & right test 1", () => {
+        // y上半轴先被扫描到
+        expect(new AngleComparer(cc.v2(-100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeLessThan(0);
+    });
+
+    test("y & right test 2", () => {
+        // 右半平面先被扫描到，y下半轴后被扫描到
+        expect(new AngleComparer(cc.v2(-100, 0)).Cmp(cc.v2(-100, -100), cc.v2(100, 100))).toBeGreaterThan(0);
+    });
+
+    test("collinear with y test 1", () => {
+        // 都在上半平面，远处先扫描到
+        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, 4))).toBeGreaterThan(0);
+    });
+
+    test("collinear with y test 2", () => {
+        // 一个在上半平面一个在下半平面
+        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, -4))).toBeLessThan(0);
+    });
+
+    test("collinear with y test 3", () => {
+        // 都在下半平面，远处先扫描到
+        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, -3), cc.v2(1, -4))).toBeGreaterThan(0);
+    });
+
+    test("collinear test 1", () => {
+        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(2, 2), cc.v2(3, 3))).toBeGreaterThan(0);
+    });
+
+    test("collinear test 2", () => {
+        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(-1, 1), cc.v2(-2, 2))).toBeGreaterThan(0);
+    });
+
+    test("normal case", () => {
+        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 4), cc.v2(2, 3))).toBeLessThan(0);
     });
 });

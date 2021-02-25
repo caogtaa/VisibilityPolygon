@@ -2,10 +2,79 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 01:28:44
+ * LastEditTime: 2021-02-25 18:28:41
 */
 
 
+export class AngleComparer
+{
+    protected _o: cc.Vec2;
+    constructor(o: cc.Vec2) {
+        this._o = o;
+    }
+
+    // 此处的比较函数以从o点出发y轴正方向射线为起点，顺时针扫描一周
+    // 比较的时候注意边缘case：y轴经过两次（正方向、负方向）后才轮到左半平面的点
+    public Cmp(a: cc.Vec2, b: cc.Vec2): Number {
+        let eps = 1e-5;
+        let o = this._o;
+        let axDelta = a.x - o.x;
+        if (Math.abs(axDelta) <= eps)
+            axDelta = 0;
+        else
+            axDelta = axDelta < 0 ? -1 : 1;
+
+        let bxDelta = b.x - o.x;
+        if (Math.abs(bxDelta) <= eps)
+            bxDelta = 0;
+        else
+            bxDelta = bxDelta < 0 ? -1 : 1;
+
+        // 如果a/b一个在左半平面（不含y轴），一个在右半平面（含y轴）,则右侧的先扫描到
+        // 注意一个在y轴上，一个在右半平面（不含y轴）的情况将在最后一个分支里讨论
+        if (axDelta !== bxDelta && (axDelta === -1 || bxDelta === -1)) {
+            // js版本的cmp和C返回值相同(<0 / 0 / >0)
+            // x比较大的（在右侧）排前面
+            return bxDelta - axDelta;
+        }
+
+        // yDelta不需要规范化到(-1/0/1)，并且predicate过程不需要eps参与
+        let ayDelta = a.y - o.y;
+        let byDelta = b.y - o.y;
+
+        // 此处必然axDelta === bxDelta
+        // 如果aob共线并和y轴平行
+        if (axDelta === 0 && bxDelta === 0) {
+            // 如果ab都在上半平面或者有一个在上半平面，y大的（离o远）先被扫描到
+            // 这里就包括了一上一下时上半平面的点先被扫描到
+            if (ayDelta >= 0 || byDelta >= 0) {
+                return byDelta - ayDelta;
+            }
+
+            // ab都在o点下半平面，y小的（离o远）点排序优先
+            // return a.y - b.y;        // 使用下方等价方法减少成员访问
+            return ayDelta - byDelta;
+        }
+
+        // 到这里为止，a和b都在左平面或者都在右平面，或者其中有一个和o垂直共线
+        axDelta = a.x - o.x;
+        bxDelta = b.x - o.x;
+
+        // let corss = (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+        let cross = axDelta * byDelta - ayDelta * bxDelta;
+
+        // 如果oab共线
+        if (Math.abs(cross) <= eps) {
+            // 取离v点较远的点优先
+            // return length_squared(b - o) - length_squared(a - o)
+            return bxDelta * bxDelta + byDelta * byDelta - axDelta * axDelta + ayDelta * ayDelta;
+        }
+
+        // 如果b在oa右侧，cross < 0; a先扫到，返回 < 0
+        // 如果b在oa左侧，corss > 0; b先扫到，返回 > 0
+        return cross;
+    }
+}
 
 export enum EOrientation {
     RIGHT_TURN = -1,

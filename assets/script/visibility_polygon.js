@@ -86,20 +86,35 @@ VisibilityPolygon.compute = function(position, segments) {
 	--minY;
 	++maxX;
 	++maxY;
+
+	// minX/minY/maxX/maxY是多边形的AABB
+	// bounded保存了所有线段，加上AABB
+	// 推测AABB只在position处于多边形外部是有用处
 	bounded.push([[minX, minY],[maxX, minY]]);
 	bounded.push([[maxX, minY],[maxX, maxY]]);
 	bounded.push([[maxX, maxY],[minX, maxY]]);
 	bounded.push([[minX, maxY],[minX, minY]]);
+
 	var polygon = [];
+
+	// sorted是按照极角排序后的顶点列表（相对于position）,（可能是倒序的）
+	// sorted保存的是顶点的下标，下标可以在bounded里取到顶点内容
 	var sorted = VisibilityPolygon.sortPoints(position, bounded);
+
+	// todo: map什么用？
 	var map = new Array(bounded.length);
 	for (var i = 0; i < map.length; ++i) map[i] = -1;
+
 	var heap = [];
+
+	// 干，这里为什么要position[0] + 1?
 	var start = [position[0] + 1, position[1]];
 	for (var i = 0; i < bounded.length; ++i) {
 		var a1 = VisibilityPolygon.angle(bounded[i][0], position);
 		var a2 = VisibilityPolygon.angle(bounded[i][1], position);
 		var active = false;
+		
+		// todo: ???
 		if (a1 > -180 && a1 <= 0 && a2 <= 180 && a2 >= 0 && a2 - a1 > 180) active = true;
 		if (a2 > -180 && a2 <= 0 && a1 <= 180 && a1 >= 0 && a1 - a2 > 180) active = true;
 		if (active) {
@@ -398,6 +413,10 @@ VisibilityPolygon.angle2 = function(a, b, c) {
 	return a3;
 };
 
+// 所有顶点根据相对于position的极角排序
+// 几个问题:
+// 1. 通过atan2计算角度后排序效率低下，可以用叉积计算相对角度
+// 2. 为什么参与排序的顶点数要 * 2？看起来points记录了这个点属于哪个线段的哪个点
 VisibilityPolygon.sortPoints = function(position, segments) {
 	var points = new Array(segments.length * 2);
 	for (var i = 0; i < segments.length; ++i) {
@@ -411,6 +430,7 @@ VisibilityPolygon.sortPoints = function(position, segments) {
 };
 
 VisibilityPolygon.angle = function(a, b) {
+	// 返回角度在区间[-180, 180]内
 	return Math.atan2(b[1]-a[1], b[0]-a[0]) * 180 / Math.PI;
 };
 
