@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 18:28:41
+ * LastEditTime: 2021-02-25 23:46:51
 */
 
 
@@ -66,8 +66,10 @@ export class AngleComparer
         // 如果oab共线
         if (Math.abs(cross) <= eps) {
             // 取离v点较远的点优先
+            // 远近优先的选择并不影响结果的正确性，但是无论怎么选择都可能在某一个象限出现needle现象
+            // 在最后的共线点过滤环节可以去掉这个needle
             // return length_squared(b - o) - length_squared(a - o)
-            return bxDelta * bxDelta + byDelta * byDelta - axDelta * axDelta + ayDelta * ayDelta;
+            return (bxDelta * bxDelta + byDelta * byDelta) - (axDelta * axDelta + ayDelta * ayDelta);
         }
 
         // 如果b在oa右侧，cross < 0; a先扫到，返回 < 0

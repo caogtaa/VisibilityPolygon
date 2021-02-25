@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 18:41:04
+ * LastEditTime: 2021-02-25 18:50:00
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -259,5 +259,9 @@ describe("Geometry.AngleComparer.Cmp", () => {
 
     test("normal case", () => {
         expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 4), cc.v2(2, 3))).toBeLessThan(0);
+    });
+
+    test("vertex overlap", () => {
+        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 1), cc.v2(1, 1))).toBe(0);
     });
 });
