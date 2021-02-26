@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 23:31:33
+ * LastEditTime: 2021-02-27 01:12:55
 */
 
 import Heap from "./Heap";
@@ -412,7 +412,7 @@ export default class Geometry {
         return result;
     }
 
-    public static VisibilityPolygon(o: cc.Vec2, polygon: cc.Vec2[]): cc.Vec2[] {
+    public static PolygonToSegments(polygon: cc.Vec2[]): Segment[] {
         let segments: Segment[] = [];
         let n = polygon.length;
         let i = 0, k = n-1;
@@ -420,7 +420,11 @@ export default class Geometry {
             segments.push(new Segment(polygon[k], polygon[i]));
         }
 
-        return this.VisibilityPolygonWithSegments(o, segments);
+        return segments;
+    }
+
+    public static VisibilityPolygon(o: cc.Vec2, polygon: cc.Vec2[]): cc.Vec2[] {
+        return this.VisibilityPolygonWithSegments(o, this.PolygonToSegments(polygon));
     }
 
     // segments可以任意顺序

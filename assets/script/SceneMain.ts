@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-27 01:05:32
+ * LastEditTime: 2021-02-27 01:22:08
 */
 
 import Geometry from "./Geometry";
@@ -20,11 +20,14 @@ export default class SceneMain extends cc.Component {
     @property(cc.Graphics)
     graphics: cc.Graphics = null;
 
-    @property(MeshPolygonSprite)
-    polygonSprite: MeshPolygonSprite = null;
+    @property([MeshPolygonSprite])
+    obstacles: MeshPolygonSprite[] = [];
 
     @property(cc.Node)
     viewPoint: cc.Node = null;
+
+    @property(cc.Node)
+    boundary: cc.Node = null;
 
     protected _epsilon: number = 1e-5;
 
@@ -101,13 +104,33 @@ export default class SceneMain extends cc.Component {
     update() {
         // todo: if nothing dirty, return
 
-        let graphics = this.graphics;
-        graphics.clear();
-        let polygon = this.polygonSprite.vertexes;
+        // convert boundary
+        let boundary = this.boundary;
+        let boudnaryVertex: cc.Vec2[] = [];
+        let l = boundary.x - boundary.anchorX * boundary.width,
+            r = boundary.x + boundary.anchorX * boundary.width,
+            t = boundary.y + boundary.anchorY * boundary.height,
+            b = boundary.y - boundary.anchorY * boundary.height;
+
+        boudnaryVertex.push(cc.v2(l, b));
+        boudnaryVertex.push(cc.v2(r, b));
+        boudnaryVertex.push(cc.v2(r, t));
+        boudnaryVertex.push(cc.v2(l, t));
+
+        let boundarySegments = Geometry.PolygonToSegments(boudnaryVertex);
+        
+        // convert holes
+        for (let ob of this.obstacles) {
+            let polygon = ob.vertexes;
+            let segments = Geometry.PolygonToSegments(polygon);
+            boundarySegments = boundarySegments.concat(segments);       // todo: use more effecient method
+        }
 
         let o = this.viewPoint.position;
-        let visibility = Geometry.VisibilityPolygon(o, polygon);
+        let visibility = Geometry.VisibilityPolygonWithSegments(o, boundarySegments);
 
+        let graphics = this.graphics;
+        graphics.clear();
         this.DrawPolygon(visibility);
         graphics.fill();
 
