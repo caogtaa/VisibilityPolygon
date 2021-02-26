@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 20:55:41
+ * LastEditTime: 2021-02-26 23:31:33
 */
 
 import Heap from "./Heap";
@@ -83,8 +83,10 @@ export class AngleComparator
 export class SegmentComparator {
     protected static _epsilon: number = 1e-5;
     protected _o: cc.Vec2;
-    constructor(o: cc.Vec2) {
+    protected _segments: Segment[];
+    constructor(o: cc.Vec2, segments: Segment[]) {
         this._o = o;
+        this._segments = segments;
     }
 
     protected static ApproxEqualVec2(a: cc.Vec2, b: cc.Vec2): boolean {
@@ -93,9 +95,16 @@ export class SegmentComparator {
     }
 
     // protected _tmpV2: cc.Vec2 = null;
-    public Cmp(x: Segment, y: Segment): number {
-        let a = x._a, b = x._b;
-        let c = y._a, d = y._b;
+    // 比较两个线段与o点的距离
+    // 比较时假设从o点发射一条射线同时穿过x, y线段
+    // 实际上同一时刻heap里的所有线段都被o点发射的射线穿过
+    // public Cmp(x: Segment, y: Segment): number {
+    public Cmp(sidx: number, sidy: number): number {
+        let x = this._segments[sidx];
+        let y = this._segments[sidy];
+
+        let a = x.a, b = x.b;
+        let c = y.a, d = y.b;
 
         let o = this._o;
         // let eps = Geometry._epsilon;
@@ -168,12 +177,29 @@ export class SegmentComparator {
 
 export class Segment {
     constructor(a: cc.Vec2, b: cc.Vec2) {
-        this._a = a;
-        this._b = b;
+        this.a = a;
+        this.b = b;
     }
 
-    public _a: cc.Vec2;
-    public _b: cc.Vec2;
+    public a: cc.Vec2;
+    public b: cc.Vec2;
+}
+
+enum EVisibilityEvent {
+    START = 0,
+    END = 1
+}
+
+export class VisibilityEvent {
+    public event: EVisibilityEvent;
+    public point: cc.Vec2;
+    public sid: number;             // segment id
+
+    constructor(event: EVisibilityEvent, point: cc.Vec2, sid: number) {
+        this.event = event;
+        this.point = point;
+        this.sid = sid;
+    }
 }
 
 export enum EOrientation {
@@ -397,11 +423,137 @@ export default class Geometry {
         return this.VisibilityPolygonWithSegments(o, segments);
     }
 
+    // segments可以任意顺序
     public static VisibilityPolygonWithSegments(o: cc.Vec2, segments: Segment[]): cc.Vec2[] {
-        let segmentCmp = new SegmentComparator(o);
-        let heap = new Heap(segmentCmp.Cmp.bind(segmentCmp));
+        let segmentCmp = new SegmentComparator(o, segments);
+        let heap = new Heap<number>(segmentCmp.Cmp.bind(segmentCmp));
+        let eps = this._epsilon;
         
+        let Orientation = this.Orientation;
+        let events: VisibilityEvent[] = [];
+        for (let sid = 0, n = segments.length; sid < n; ++sid) {
+            let s = segments[sid];
+            let oab = Orientation(o, s.a, s.b);
+            if (oab === EOrientation.COLLINEAR) {
+                // 忽略和射线共线的线段
+                continue;
+            }
 
-        return [];
+            // 根据线段的扫描顺序将顶点事件记录到events
+            if (oab === EOrientation.RIGHT_TURN) {
+                events.push(new VisibilityEvent(EVisibilityEvent.START, s.a, sid));
+                events.push(new VisibilityEvent(EVisibilityEvent.END, s.b, sid));
+            } else {
+                events.push(new VisibilityEvent(EVisibilityEvent.START, s.b, sid));
+                events.push(new VisibilityEvent(EVisibilityEvent.END, s.a, sid));
+            }
+
+            // 从p点向上发射射线，如果当前线段和该射线相交，则加入到state
+            let a = s.a, b = s.b;
+            if (a.x > b.x) {
+                a = b;
+                b = s.a;
+            }
+
+            // 共线的线段已经在上面被排除
+            // 这里的abo = right_turn用于筛选处于p点上方的线段
+            // 不考虑左侧endpoint相交的线段。p.x需要在(a.x, b.x]范围内
+            // 这些线段的特点是一会儿开始扫描后会先经过他们的end events
+            let abo = Orientation(a, b, o);
+            if (abo === EOrientation.RIGHT_TURN && (a.x + eps < o.x && o.x <= b.x + eps)) {
+                heap.push(sid);
+            }
+        }
+
+        // 对event进行排序
+        let angleCmp = new AngleComparator(o);
+        events.sort((ve1: VisibilityEvent, ve2: VisibilityEvent) => {
+            // 公共endpoint先让end event排前面，end的线段先从堆里出来
+            let p1 = ve1.point;
+            let p2 = ve2.point;
+            if (Math.abs(p1.x - p2.x) <= eps && Math.abs(p1.y - p2.y) <= eps) {
+                if (ve1.event === ve2.event)
+                    return 0;
+                
+                if (ve1.event === EVisibilityEvent.END && ve2.event === EVisibilityEvent.START)
+                    return -1;
+
+                return 1;
+            }
+
+            return angleCmp.Cmp(p1, p2);
+        });
+
+        // to remind:
+        // state初始保存了所有p点向上射线相交的所有线段（无顺序）
+        // events按照扫描极角顺序排列，一个线段有start_event/end_event里面可能含有重复的end point
+        let result: cc.Vec2[] = [];
+        for (let ve of events) {
+            let point = ve.point;
+            let eventType = ve.event;
+
+            // 一个线段扫描结束，移出线段
+            // 两个线段共同的endpoint总是end_event先被执行
+            if (eventType === EVisibilityEvent.END)
+                heap.remove(ve.sid);
+
+            if (heap.isEmpty()) {
+                // 每当state为空时，可以认为找到了一个visibility polygon的顶点（常见于无遮挡的简单边缘）
+                result.push(point);
+            } else if (segmentCmp.Cmp(ve.sid, heap.peek()) == -1) {
+                // case 1: 新的顶点挡在了所有已有线段的前面
+                // case 2: 刚刚移除了一个线段，视线可以看得更远了，刚移除的线段就是ve.segment
+
+                // 计算射线和最近线段的交点
+                let rayDir = point.sub(o);       // todo: use static
+                let nearestSid = heap.peek();
+                let nearestSegment = segments[nearestSid];
+
+                let intersection = this.RaySegmentIntersection(o, rayDir, nearestSegment.a, nearestSegment.b)
+                if (!intersection) {
+                    console.error("should have an intersection");
+                }
+
+                // 如果是新顶点加入引起遮挡，则先加入交点
+                // 如果是老顶点移除，则先加入老顶点
+                // intersection引用了其他的值，需要copy一份
+                if (eventType === EVisibilityEvent.START) {
+                    result.push(intersection.clone());
+                    result.push(point);
+                } else {
+                    result.push(point);
+                    result.push(intersection.clone());
+                }
+            }
+
+            if (eventType == EVisibilityEvent.START)
+                heap.push(ve.sid);
+        }
+
+        
+        // 运行完毕后state里仍然可能有线段
+        // 这些线段和算法一开始加入state的线段是同一批（和p点线上的射线相交）
+
+        // remove collinear points
+        // 这个过程可以移除needles
+        let n = result.length;
+        let top = 0, prev = n-1;
+        let next: number;
+        for (let i = 0; i < n; ++i) {
+            next = i + 1;
+            if (next >= n)
+                next -= n;
+
+            // 非共线情况下 *top = *it, top++, it++
+            // 共线情况下，prev / top保持不变，it / next继续迭代。（实际上被抹去的是top点，好理解）
+            // 不管是普通的共线还是needle共线，抹去的都是中间的点(top变量)，结果符合预期
+            if (Orientation(result[prev], result[i], result[next]) != EOrientation.COLLINEAR) {
+                result[top] = result[i];
+                prev = top++;
+            }
+        }
+
+        result.length = top;
+        return result;
     }
 }

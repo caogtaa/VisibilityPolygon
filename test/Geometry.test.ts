@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 21:14:43
+ * LastEditTime: 2021-02-26 23:48:33
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -335,55 +335,77 @@ function MakeSegment(x1: number, y1: number, x2: number, y2: number): Segment {
 
 describe("Geometry.SegmentComparator.Cmp", () => {
     test("parallel test 1", () => {
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(1, 0, 0, 1),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(-1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(-1);
     });
 
     test("parallel test 2", () => {
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(2, 0, 0, 2),
             MakeSegment(1, 0, 0, 1)
-        )).toBe(1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(1);
     });
 
     test("common endpoint test1", () => {
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(0, 2, 2, 2),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(1);
     });
 
     test("common case test 1", () => {
         // a水平并在b后方
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(-1, 5, 1, 5),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(1);
     });
 
     test("common case test 2", () => {
         // a垂直并在b后方
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(5, -1, 5, 1),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(1);
     });
 
     test("common case test 3", () => {
         // a水平并在b前方
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(-1, 1, 1, 1),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(-1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(-1);
     });
 
     test("common case test 4", () => {
         // a垂直并在b前方
-        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+        let segments = [
             MakeSegment(1, -1, 1, 1),
             MakeSegment(2, 0, 0, 2)
-        )).toBe(-1);
+        ];
+        expect(new SegmentComparator(cc.v2(0, 0), segments).Cmp(0, 1)).toBe(-1);
+    });
+});
+
+describe("Geometry.VisibilityPolygon", () => {
+    test("simple polygon test 1", () => {
+        let polygon: cc.Vec2[] = [cc.v2(0, 0), cc.v2(2, 0), cc.v2(0, 2)];
+        let visibility: cc.Vec2[] = [cc.v2(2, 0), cc.v2(0, 0), cc.v2(0, 2)];
+        expect(Geometry.VisibilityPolygon(cc.v2(0.5, 0.5), polygon)).toEqual(visibility);        
+    });
+
+    test("simple polygon test 2", () => {
+        // https://doc.cgal.org/latest/Visibility_2/Visibility_2_2simple_polygon_visibility_2_8cpp-example.html
+        let polygon: cc.Vec2[] = [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)];
+        let visibility: cc.Vec2[] = [cc.v2(1, 2), cc.v2(3, 2), cc.v2(0, 0), cc.v2(0, 4)];
+        expect(Geometry.VisibilityPolygon(cc.v2(0.5, 2), polygon)).toEqual(visibility);        
     });
 });
