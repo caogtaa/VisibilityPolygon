@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 18:50:00
+ * LastEditTime: 2021-02-26 15:13:47
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -263,5 +263,46 @@ describe("Geometry.AngleComparer.Cmp", () => {
 
     test("vertex overlap", () => {
         expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 1), cc.v2(1, 1))).toBe(0);
+    });
+});
+
+describe("Geometry.RaySegmentIntersection", () => {
+    test("parallel", () => {
+        expect(Geometry.RaySegmentIntersection(cc.v2(0, 0), cc.v2(2, 3), cc.v2(1, 0), cc.v2(3, 3))).toBeNull();
+    });
+
+    test("parallel vertical", () => {
+        expect(Geometry.RaySegmentIntersection(cc.v2(0, 0), cc.v2(0, 3), cc.v2(1, 0), cc.v2(1, 3))).toBeNull();
+    });
+
+    test("parallel horizontal", () => {
+        expect(Geometry.RaySegmentIntersection(cc.v2(0, 0), cc.v2(3, 0), cc.v2(0, 1), cc.v2(3, 1))).toBeNull();
+    });
+
+    // 由于上层保证没有这个场景，处于性能考虑忽略这个判断
+    // test("collinear", () => {
+    // });
+
+    test("intersect test 1", () => {
+        // 射线的延长线会穿过线段中点
+        expect(Geometry.RaySegmentIntersection(cc.v2(0, 0), cc.v2(0.1, 0.1), cc.v2(2, 0), cc.v2(0, 2)))
+            .toEqual(cc.v2(1, 1));
+    });
+
+    test("intersect test 2", () => {
+        // 线段穿过射线起始点
+        expect(Geometry.RaySegmentIntersection(cc.v2(0, 0), cc.v2(0.1, 0.1), cc.v2(1, -1), cc.v2(-1, 1)))
+            .toEqual(cc.v2(0, 0));
+    });
+
+    test("intersect test 3", () => {
+        // 射线和线段不平行，但是相交
+        expect(Geometry.RaySegmentIntersection(cc.v2(1, 0), cc.v2(0, 0.1), cc.v2(0, 0), cc.v2(4, 2)))
+            .toEqual(cc.v2(1, 0.5));
+    });
+
+    test("not intersect test 1", () => {
+        // 射线和线段不平行，不相交
+        expect(Geometry.RaySegmentIntersection(cc.v2(1, 1), cc.v2(0, 0.1), cc.v2(0, 0), cc.v2(4, 2))).toBeNull();
     });
 });

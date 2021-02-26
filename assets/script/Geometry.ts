@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-25 23:46:51
+ * LastEditTime: 2021-02-26 15:00:43
 */
 
 
@@ -173,7 +173,7 @@ export default class Geometry {
     // 由于o点在多边形左侧边上时，会被判定为不在多边形内部
     // 为了解决这个对称性问题，请在射线检测法前先判断点是否在某一边上，如果是则直接判为在多边形内部
     // 在游戏运行期间要避免viewpoint刚好处于某条边上（通过碰撞检测预防这一帧发生）
-    protected static IsRayIntersect(o: cc.Vec2, p1: cc.Vec2, q1: cc.Vec2): boolean {
+    protected static IsLeftwardRayIntersect(o: cc.Vec2, p1: cc.Vec2, q1: cc.Vec2): boolean {
         let eps = this._epsilon;
 
         // 保证b是线段两个点里y较小的
@@ -190,13 +190,14 @@ export default class Geometry {
             && this.Orientation(b, t, o) == EOrientation.RIGHT_TURN;
 	}
 
+    // 可参考engine/cocos2d/core/collider/CCIntersection.js进行简化
+    // return cc.Intersection.pointInPolygon(o, polygon);
+    // 引擎版本对于o在边上、o和endpoint重叠的处理不同
     public static IsPointInPolygon(o: cc.Vec2, polygon: cc.Vec2[]): boolean {
-        let i = 0, k = 1, n = polygon.length;
+        let n = polygon.length;
+        let i = 0, k = n-1;
         let acc = 0;
-        for (; i < n; ++i, ++k) {
-            if (k == n)
-                k = 0;
-
+        for (; i < n; k = i++) {
             // 判断点和线段pi->pk的关系
             let pi = polygon[i];
             let pk = polygon[k];
@@ -205,11 +206,60 @@ export default class Geometry {
                 return true;
             }
 
-            if (this.IsRayIntersect(o, pi, pk)) {
+            if (this.IsLeftwardRayIntersect(o, pi, pk)) {
                 ++ acc;
             }
         }
 
         return acc % 2 === 1;
+    }
+
+    // return the intersectio of ray p+tr and segment (q, qs) (or q+us in another presentation)
+    // return null if they do not intersect
+    // https://stackoverflow.com/questions/14307158/how-do-you-check-for-intersection-between-a-line-segment-and-a-line-ray-emanatin
+    // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+    public static RaySegmentIntersection(p: cc.Vec2, r: cc.Vec2, q: cc.Vec2, qs: cc.Vec2): cc.Vec2 {
+        let eps = this._epsilon;
+        let s = qs.sub(q);       // todo: use static v2
+        let rxs = this.Cross(r, s);
+        if (Math.abs(rxs) <= eps)
+            rxs = 0;
+
+        if (rxs === 0) {
+            // todo: 暂时约定平行、重叠的都不返回相交点，重叠的相交点在当前场景里不存在（和射线共线的线段已经被上层忽略）
+            return null;
+            // let cross2 = this.Cross(q.sub(p), r);
+            // if (Math.abs(cross2) <= eps)
+            //     cross2 = 0;
+
+            // if (cross2 === 0) {
+            //     // 共线
+
+            //     // TODO: 射线经过线段，如果射线经过两个endpoint，约定返回较远的一个
+            //     return null;
+            // }
+
+            // // 平行
+            // return null;
+        }
+
+        let pq = q.sub(p);      // todo: use static v2
+        let u = this.Cross(pq, r) / rxs;
+        if (u + eps < 0 || 1 + eps < u) {
+            // u不在区间[0, 1]内
+            return null;
+        }
+
+        let t = this.Cross(pq, s) / rxs;
+        if (t + eps < 0) {
+            // t不在区间[0, +INFINITE]内
+            return null;
+        }
+
+        // 相交
+        // return p + tr
+        let result = r.mul(t);
+        result.addSelf(p);
+        return result;
     }
 }
