@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 15:13:47
+ * LastEditTime: 2021-02-26 16:24:44
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -304,5 +304,27 @@ describe("Geometry.RaySegmentIntersection", () => {
     test("not intersect test 1", () => {
         // 射线和线段不平行，不相交
         expect(Geometry.RaySegmentIntersection(cc.v2(1, 1), cc.v2(0, 0.1), cc.v2(0, 0), cc.v2(4, 2))).toBeNull();
+    });
+
+    test("collinear and disjoint", () => {
+        // 射线往右，线段在左
+        expect(Geometry.RaySegmentIntersection(cc.v2(1, 1), cc.v2(1, 0), cc.v2(0, 1), cc.v2(-1, 1))).toBeNull();
+    });
+
+    test("collinear and ray origin inside segment", () => {
+        expect(Geometry.RaySegmentIntersection(cc.v2(1, 1), cc.v2(1, 0), cc.v2(0, 1), cc.v2(1.5, 1)))
+            .toEqual(cc.v2(1, 1));
+    });
+
+    test("collinear and ray shooting segment", () => {
+        // 返回先遇到的顶点
+        expect(Geometry.RaySegmentIntersection(cc.v2(1, 1), cc.v2(0.1, 0), cc.v2(1.5, 1), cc.v2(2.5, 1)))
+            .toEqual(cc.v2(1.5, 1));
+    });
+
+    test("collinear ray origin overlap endpoint", () => {
+        // 射线往右，线段在左
+        expect(Geometry.RaySegmentIntersection(cc.v2(2, 2), cc.v2(1, 1), cc.v2(1, 1), cc.v2(2, 2)))
+            .toEqual(cc.v2(2, 2));
     });
 });

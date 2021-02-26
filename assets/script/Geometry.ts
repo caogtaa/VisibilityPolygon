@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 15:00:43
+ * LastEditTime: 2021-02-26 16:32:47
 */
 
 
@@ -131,6 +131,10 @@ export default class Geometry {
         return u.x * v.y - u.y * v.x;
     }
 
+    public static Dot(u: cc.Vec2, v: cc.Vec2): number {
+        return u.x * v.x + u.y * v.y;
+    }
+
     // 判断点o是否在pq线段上
     public static IsOnSegment(o: cc.Vec2, p: cc.Vec2, q: cc.Vec2): boolean {
         return this.ApproxIsInRangePoint(o, p, q) && 
@@ -218,32 +222,53 @@ export default class Geometry {
     // return null if they do not intersect
     // https://stackoverflow.com/questions/14307158/how-do-you-check-for-intersection-between-a-line-segment-and-a-line-ray-emanatin
     // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+    // 整个计算过程不会产生新的v2对象，外部使用时注意不要长期持有返回值
+    protected static _tmpV2_1: cc.Vec2 = cc.v2(0, 0);
+    protected static _tmpV2_2: cc.Vec2 = cc.v2(0, 0);
+
     public static RaySegmentIntersection(p: cc.Vec2, r: cc.Vec2, q: cc.Vec2, qs: cc.Vec2): cc.Vec2 {
+        let tmp1 = this._tmpV2_1;
+        let tmp2 = this._tmpV2_2;
+
         let eps = this._epsilon;
-        let s = qs.sub(q);       // todo: use static v2
+        let s = qs.sub(q, tmp1);        // tmp1被s引用，注意不要覆盖
         let rxs = this.Cross(r, s);
-        if (Math.abs(rxs) <= eps)
-            rxs = 0;
 
-        if (rxs === 0) {
-            // todo: 暂时约定平行、重叠的都不返回相交点，重叠的相交点在当前场景里不存在（和射线共线的线段已经被上层忽略）
+        if (Math.abs(rxs) <= eps) {
+            // 平行/共线，属于比较少的情况，允许计算稍微繁琐点
+            let cross2 = this.Cross(q.sub(p, tmp2), r);     // tmp2马上丢弃
+            if (Math.abs(cross2) <= eps) {
+                // 共线
+                // 通过点积计算线段两点相对于射线的方向，为正时同向，为负时反向
+                let pqDir = this.Dot(q.sub(p, tmp2), r);    // tmp2马上丢弃
+                if (Math.abs(pqDir) <= eps)
+                    pqDir = 0;
+
+                let pqsDir = this.Dot(qs.sub(p, tmp2), r);  // tmp2马上丢弃
+                if (Math.abs(pqsDir) <= eps)
+                    pqsDir = 0;
+
+                if (pqDir < 0 && pqsDir < 0) {
+                    // 线段两点都在射线的反方向，不相交
+                    return null;
+                } else if (pqDir * pqsDir <= 0) {
+                    // 线段两点在射线的不同方向上，或顶点和射线起始点相交，说明射线原点处于线段上
+                    return p;
+                } else if (pqDir > pqsDir) {
+                    // 此时q, qs都在射线同方向上
+                    // qs点比较近
+                    return qs;
+                }
+
+                // pqDir <= pqsDir, q点比较近
+                return q;
+            }
+
+            // 平行
             return null;
-            // let cross2 = this.Cross(q.sub(p), r);
-            // if (Math.abs(cross2) <= eps)
-            //     cross2 = 0;
-
-            // if (cross2 === 0) {
-            //     // 共线
-
-            //     // TODO: 射线经过线段，如果射线经过两个endpoint，约定返回较远的一个
-            //     return null;
-            // }
-
-            // // 平行
-            // return null;
         }
 
-        let pq = q.sub(p);      // todo: use static v2
+        let pq = q.sub(p, tmp2);        // tmp2倍pq引用
         let u = this.Cross(pq, r) / rxs;
         if (u + eps < 0 || 1 + eps < u) {
             // u不在区间[0, 1]内
@@ -258,7 +283,7 @@ export default class Geometry {
 
         // 相交
         // return p + tr
-        let result = r.mul(t);
+        let result = r.mul(t, tmp2);    // pq已经没用，可以安全使用tmp2
         result.addSelf(p);
         return result;
     }
