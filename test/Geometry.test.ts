@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 23:48:33
+ * LastEditTime: 2021-02-27 00:31:46
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -407,5 +407,11 @@ describe("Geometry.VisibilityPolygon", () => {
         let polygon: cc.Vec2[] = [cc.v2(0, 4), cc.v2(0, 0), cc.v2(3, 2), cc.v2(4, 0), cc.v2(4, 4), cc.v2(1, 2)];
         let visibility: cc.Vec2[] = [cc.v2(1, 2), cc.v2(3, 2), cc.v2(0, 0), cc.v2(0, 4)];
         expect(Geometry.VisibilityPolygon(cc.v2(0.5, 2), polygon)).toEqual(visibility);        
+    });
+
+    test("simple polygon test 3", () => {
+        // 观察点和某一个点x相等
+        let polygon: cc.Vec2[] = [cc.v2(0, 4), cc.v2(1, 0), cc.v2(-1, 0)];
+        expect(Geometry.VisibilityPolygon(cc.v2(0, 0), polygon)).toEqual(polygon);        
     });
 });

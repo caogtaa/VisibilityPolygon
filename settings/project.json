@@ -11,8 +11,8 @@
     "3D Physics/Builtin"
   ],
   "preview-port": 7456,
-  "design-resolution-width": 960,
-  "design-resolution-height": 640,
+  "design-resolution-width": 720,
+  "design-resolution-height": 1280,
   "fit-width": false,
   "fit-height": true,
   "use-project-simulator-setting": false,
