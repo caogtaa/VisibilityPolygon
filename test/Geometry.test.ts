@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 16:24:44
+ * LastEditTime: 2021-02-26 21:14:43
 */
 
 // 如需调用Cocos Creator的内部方法请参考
@@ -14,7 +14,7 @@ npm i jest-canvas-mock -D
 */
 // vscode插件安装Jest、Jest Test Explorer
 
-import Geometry, { AngleComparer, EOrientation } from "../assets/script/Geometry";
+import Geometry, { AngleComparator, EOrientation, Segment, SegmentComparator } from "../assets/script/Geometry";
 
 describe("Geometry.add", () => {
     test("simple add", () => {
@@ -216,53 +216,53 @@ describe("Geometry.IsPointInPolygon", () => {
 describe("Geometry.AngleComparer.Cmp", () => {
     test("left & right", () => {
         // 右半平面先被扫描到
-        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(0, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
     });
 
     test("left & y", () => {
         // y轴（沿参考点向上）先被扫描到
-        expect(new AngleComparer(cc.v2(100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeGreaterThan(0);
     });
 
     test("y & right test 1", () => {
         // y上半轴先被扫描到
-        expect(new AngleComparer(cc.v2(-100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeLessThan(0);
+        expect(new AngleComparator(cc.v2(-100, 0)).Cmp(cc.v2(-100, 100), cc.v2(100, 100))).toBeLessThan(0);
     });
 
     test("y & right test 2", () => {
         // 右半平面先被扫描到，y下半轴后被扫描到
-        expect(new AngleComparer(cc.v2(-100, 0)).Cmp(cc.v2(-100, -100), cc.v2(100, 100))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(-100, 0)).Cmp(cc.v2(-100, -100), cc.v2(100, 100))).toBeGreaterThan(0);
     });
 
     test("collinear with y test 1", () => {
         // 都在上半平面，远处先扫描到
-        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, 4))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, 4))).toBeGreaterThan(0);
     });
 
     test("collinear with y test 2", () => {
         // 一个在上半平面一个在下半平面
-        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, -4))).toBeLessThan(0);
+        expect(new AngleComparator(cc.v2(1, 1)).Cmp(cc.v2(1, 3), cc.v2(1, -4))).toBeLessThan(0);
     });
 
     test("collinear with y test 3", () => {
         // 都在下半平面，远处先扫描到
-        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(1, -3), cc.v2(1, -4))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(1, 1)).Cmp(cc.v2(1, -3), cc.v2(1, -4))).toBeGreaterThan(0);
     });
 
     test("collinear test 1", () => {
-        expect(new AngleComparer(cc.v2(1, 1)).Cmp(cc.v2(2, 2), cc.v2(3, 3))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(1, 1)).Cmp(cc.v2(2, 2), cc.v2(3, 3))).toBeGreaterThan(0);
     });
 
     test("collinear test 2", () => {
-        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(-1, 1), cc.v2(-2, 2))).toBeGreaterThan(0);
+        expect(new AngleComparator(cc.v2(0, 0)).Cmp(cc.v2(-1, 1), cc.v2(-2, 2))).toBeGreaterThan(0);
     });
 
     test("normal case", () => {
-        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 4), cc.v2(2, 3))).toBeLessThan(0);
+        expect(new AngleComparator(cc.v2(0, 0)).Cmp(cc.v2(1, 4), cc.v2(2, 3))).toBeLessThan(0);
     });
 
     test("vertex overlap", () => {
-        expect(new AngleComparer(cc.v2(0, 0)).Cmp(cc.v2(1, 1), cc.v2(1, 1))).toBe(0);
+        expect(new AngleComparator(cc.v2(0, 0)).Cmp(cc.v2(1, 1), cc.v2(1, 1))).toBe(0);
     });
 });
 
@@ -326,5 +326,64 @@ describe("Geometry.RaySegmentIntersection", () => {
         // 射线往右，线段在左
         expect(Geometry.RaySegmentIntersection(cc.v2(2, 2), cc.v2(1, 1), cc.v2(1, 1), cc.v2(2, 2)))
             .toEqual(cc.v2(2, 2));
+    });
+});
+
+function MakeSegment(x1: number, y1: number, x2: number, y2: number): Segment {
+    return new Segment(cc.v2(x1, y1), cc.v2(x2, y2));
+}
+
+describe("Geometry.SegmentComparator.Cmp", () => {
+    test("parallel test 1", () => {
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(1, 0, 0, 1),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(-1);
+    });
+
+    test("parallel test 2", () => {
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(2, 0, 0, 2),
+            MakeSegment(1, 0, 0, 1)
+        )).toBe(1);
+    });
+
+    test("common endpoint test1", () => {
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(0, 2, 2, 2),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(1);
+    });
+
+    test("common case test 1", () => {
+        // a水平并在b后方
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(-1, 5, 1, 5),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(1);
+    });
+
+    test("common case test 2", () => {
+        // a垂直并在b后方
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(5, -1, 5, 1),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(1);
+    });
+
+    test("common case test 3", () => {
+        // a水平并在b前方
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(-1, 1, 1, 1),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(-1);
+    });
+
+    test("common case test 4", () => {
+        // a垂直并在b前方
+        expect(new SegmentComparator(cc.v2(0, 0)).Cmp(
+            MakeSegment(1, -1, 1, 1),
+            MakeSegment(2, 0, 0, 2)
+        )).toBe(-1);
     });
 });

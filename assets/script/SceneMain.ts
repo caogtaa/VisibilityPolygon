@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-24 20:45:45
+ * LastEditTime: 2021-02-26 18:48:08
 */
 
 import Geometry from "./Geometry";
@@ -19,7 +19,7 @@ export default class SceneMain extends cc.Component {
     @property(cc.Graphics)
     graphics: cc.Graphics = null;
 
-    protected _epsilon: Number = 1e-5;
+    protected _epsilon: number = 1e-5;
 
     onLoad() {
 

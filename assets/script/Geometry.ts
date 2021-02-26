@@ -2,11 +2,12 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-26 16:32:47
+ * LastEditTime: 2021-02-26 20:55:41
 */
 
+import Heap from "./Heap";
 
-export class AngleComparer
+export class AngleComparator
 {
     protected _o: cc.Vec2;
     constructor(o: cc.Vec2) {
@@ -15,7 +16,7 @@ export class AngleComparer
 
     // 此处的比较函数以从o点出发y轴正方向射线为起点，顺时针扫描一周
     // 比较的时候注意边缘case：y轴经过两次（正方向、负方向）后才轮到左半平面的点
-    public Cmp(a: cc.Vec2, b: cc.Vec2): Number {
+    public Cmp(a: cc.Vec2, b: cc.Vec2): number {
         let eps = 1e-5;
         let o = this._o;
         let axDelta = a.x - o.x;
@@ -78,6 +79,103 @@ export class AngleComparer
     }
 }
 
+
+export class SegmentComparator {
+    protected static _epsilon: number = 1e-5;
+    protected _o: cc.Vec2;
+    constructor(o: cc.Vec2) {
+        this._o = o;
+    }
+
+    protected static ApproxEqualVec2(a: cc.Vec2, b: cc.Vec2): boolean {
+        let eps = SegmentComparator._epsilon;
+        return Math.abs(a.x - b.x) <= eps && Math.abs(a.y - b.y) <= eps;
+    }
+
+    // protected _tmpV2: cc.Vec2 = null;
+    public Cmp(x: Segment, y: Segment): number {
+        let a = x._a, b = x._b;
+        let c = y._a, d = y._b;
+
+        let o = this._o;
+        // let eps = Geometry._epsilon;
+
+        let ApproxEqualVec2 = SegmentComparator.ApproxEqualVec2;
+        
+        // 如果ab/cd有公共顶点，将该顶点交换到a/c
+        if (ApproxEqualVec2(b, c) || ApproxEqualVec2(b, d)) {
+            let tmp = a;
+            a = b;
+            b = tmp;
+        }
+
+        if (ApproxEqualVec2(a, d))  {
+            let tmp = c;
+            c = d;
+            d = tmp;
+        }
+
+        let Orientation = Geometry.Orientation;
+
+        // 有公共顶点的情况
+        if (ApproxEqualVec2(a, c)) {
+            let oad = Orientation(o, a, d);
+            let oab = Orientation(o, a, b);
+            if (oad != oab || ApproxEqualVec2(b, d)) {
+                // 如果ab/cd几乎重合，那么两者顺序不变
+                // oad != oab的情况不应该出现。原因：
+                // 1. 简单衔接的线段（扫描时无折角），end_event会先执行，左右两侧线段不会同时出现在堆里
+                // 2. 其中一个线段和o共线的情况，在外部会排除掉
+                return 0;
+            }
+
+            // abd不可能共线，因为当前是折角的case
+            // abo不可能共线，因为外部会排除掉
+            // 如果abd和abo方向相反，说明b处于o和d之间，那么ab离o更近
+            if (Orientation(a, b, d) != Orientation(a, b, o))
+                return -1;
+
+            return 1;
+        }
+
+        // 无公共顶点的情况
+        let cda = Orientation(c, d, a);
+        let cdb = Orientation(c, d, b);
+        if (cda === EOrientation.COLLINEAR && cdb === EOrientation.COLLINEAR) {
+            // 四点共线，不可能出现
+            // return distance_squared(origin, a) - distance_squared(origin, c);
+            return 0;
+        } else if (cda === cdb
+            || cda === EOrientation.COLLINEAR
+            || cdb === EOrientation.COLLINEAR) {
+            // ab在cd的同一侧
+            // 如果o和ab都在cd的同一侧，则说明ab在前面
+            let cdo = Orientation(c, d, o);
+            if (cdo === cda || cdo === cdb)
+                return -1;
+
+            return 1;
+        }
+
+        // a/b在cd线段的两侧
+        // 检查abo和abc的方向，画图比较好理解
+        if (Orientation(a, b, o) !== Orientation(a, b, c))
+            return -1;
+
+        return 1;
+    }
+}
+
+export class Segment {
+    constructor(a: cc.Vec2, b: cc.Vec2) {
+        this._a = a;
+        this._b = b;
+    }
+
+    public _a: cc.Vec2;
+    public _b: cc.Vec2;
+}
+
 export enum EOrientation {
     RIGHT_TURN = -1,
     COLLINEAR = 0,
@@ -85,7 +183,7 @@ export enum EOrientation {
 }
 
 export default class Geometry {
-	protected static _epsilon = 1e-5;
+	public static _epsilon = 1e-5;
 
     public static add(a: number, b: number): number {
         return a + b;
@@ -146,7 +244,7 @@ export default class Geometry {
     public static Orientation(o: cc.Vec2, p: cc.Vec2, q: cc.Vec2): EOrientation {
         // 如果想要使用cross()，考虑增加两个临时变量保存向量sub结果
         let c = (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
-        if (Math.abs(c) <= this._epsilon)
+        if (Math.abs(c) <= Geometry._epsilon)
             return EOrientation.COLLINEAR;
 
         return c > 0 ? EOrientation.LEFT_TURN : EOrientation.RIGHT_TURN;
@@ -286,5 +384,24 @@ export default class Geometry {
         let result = r.mul(t, tmp2);    // pq已经没用，可以安全使用tmp2
         result.addSelf(p);
         return result;
+    }
+
+    public static VisibilityPolygon(o: cc.Vec2, polygon: cc.Vec2[]): cc.Vec2[] {
+        let segments: Segment[] = [];
+        let n = polygon.length;
+        let i = 0, k = n-1;
+        for (; i < n; k=i++) {
+            segments.push(new Segment(polygon[k], polygon[i]));
+        }
+
+        return this.VisibilityPolygonWithSegments(o, segments);
+    }
+
+    public static VisibilityPolygonWithSegments(o: cc.Vec2, segments: Segment[]): cc.Vec2[] {
+        let segmentCmp = new SegmentComparator(o);
+        let heap = new Heap(segmentCmp.Cmp.bind(segmentCmp));
+        
+
+        return [];
     }
 }
