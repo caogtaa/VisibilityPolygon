@@ -17,6 +17,8 @@
 3. Planar Sight。O(N^2)预处理时间、空间复杂度，O(N)运行时时间复杂度
 
 本工程目前采用的是Sweep line算法，实现最简单的一种。
+Triangular Expansion算法收录于CGAL库中，后续考虑移植过来。
+Planar Sight算法也是开源的，有兴趣的同学可以参考[Planar Sight](https://github.com/BichengLUO/PlanarSight)
 
 
 #### 参考资料
