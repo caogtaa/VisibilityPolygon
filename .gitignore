@@ -51,3 +51,7 @@ Thumbs.db
 #//////////////////////////
 
 .vscode/
+
+projects/web-mobile/
+projects/web-desktop/
+projects/wechatgame/

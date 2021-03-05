@@ -183,7 +183,7 @@
       "array": [
         0,
         0,
-        564.9885757171388,
+        564.8921329122684,
         0,
         0,
         0,
@@ -972,8 +972,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 20,
-      "height": 20
+      "width": 40,
+      "height": 40
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
