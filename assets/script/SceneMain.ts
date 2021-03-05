@@ -2,14 +2,11 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-27 01:22:08
+ * LastEditTime: 2021-03-05 21:12:04
 */
 
-import Geometry from "./Geometry";
+import Geometry, { Segment } from "./Geometry";
 import MeshPolygonSprite from "./MeshPolygonSprite";
-
-//@ts-ignore
-const VisibilityPolygon = require("./visibility_polygon.js");
 
 const { ccclass, property } = cc._decorator;
 
@@ -106,28 +103,53 @@ export default class SceneMain extends cc.Component {
 
         // convert boundary
         let boundary = this.boundary;
-        let boudnaryVertex: cc.Vec2[] = [];
         let l = boundary.x - boundary.anchorX * boundary.width,
             r = boundary.x + boundary.anchorX * boundary.width,
             t = boundary.y + boundary.anchorY * boundary.height,
             b = boundary.y - boundary.anchorY * boundary.height;
 
-        boudnaryVertex.push(cc.v2(l, b));
-        boudnaryVertex.push(cc.v2(r, b));
-        boudnaryVertex.push(cc.v2(r, t));
-        boudnaryVertex.push(cc.v2(l, t));
-
-        let boundarySegments = Geometry.PolygonToSegments(boudnaryVertex);
-        
-        // convert holes
+        let segments: Segment[] = [];
+        // convert holes/obstacles
         for (let ob of this.obstacles) {
             let polygon = ob.vertexes;
-            let segments = Geometry.PolygonToSegments(polygon);
-            boundarySegments = boundarySegments.concat(segments);       // todo: use more effecient method
+            Geometry.PolygonToSegments(polygon, segments);
         }
 
+        // extend boundary to prevent obstacle/boundary from overlapping
+        let shouldExtendBoundary: boolean = true;
+        if (shouldExtendBoundary) {
+            for (let ob of this.obstacles) {
+                let polygon = ob.vertexes;
+                for (let p of polygon) {
+                    if (p.x < l) {
+                        l = p.x;
+                    } else if (p.x > r) {
+                        r = p.x;
+                    }
+    
+                    if (p.y < b) {
+                        b = p.y;
+                    } else if (p.y > t) {
+                        t = p.y;
+                    }
+                }
+            }
+
+            l -= 1;
+            r += 1;
+            b -= 1;
+            t += 1;
+        }
+
+        let boundaryVertex: cc.Vec2[] = [];
+        boundaryVertex.push(cc.v2(l, b));
+        boundaryVertex.push(cc.v2(r, b));
+        boundaryVertex.push(cc.v2(r, t));
+        boundaryVertex.push(cc.v2(l, t));
+        Geometry.PolygonToSegments(boundaryVertex, segments);
+
         let o = this.viewPoint.position;
-        let visibility = Geometry.VisibilityPolygonWithSegments(o, boundarySegments);
+        let visibility = Geometry.VisibilityPolygonWithSegments(o, segments);
 
         let graphics = this.graphics;
         graphics.clear();

@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-02-27 01:12:55
+ * LastEditTime: 2021-03-05 20:59:51
 */
 
 import Heap from "./Heap";
@@ -412,15 +412,15 @@ export default class Geometry {
         return result;
     }
 
-    public static PolygonToSegments(polygon: cc.Vec2[]): Segment[] {
-        let segments: Segment[] = [];
+    public static PolygonToSegments(polygon: cc.Vec2[], out?: Segment[]): Segment[] {
+        out = out || [];
         let n = polygon.length;
         let i = 0, k = n-1;
         for (; i < n; k=i++) {
-            segments.push(new Segment(polygon[k], polygon[i]));
+            out.push(new Segment(polygon[k], polygon[i]));
         }
 
-        return segments;
+        return out;
     }
 
     public static VisibilityPolygon(o: cc.Vec2, polygon: cc.Vec2[]): cc.Vec2[] {
