@@ -1,0 +1,15 @@
+{
+  "__type__": "cc.Material",
+  "_name": "Visibility",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "faacee35-549e-4ac2-9f98-9c3d6df955d7"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "props": {}
+    }
+  }
+}

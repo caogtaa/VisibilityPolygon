@@ -102,7 +102,7 @@ export default class MeshPolygonSprite extends cc.Component {
             ]), this.vertexes.length, true);
             this._meshCache[this.vertexes.length] = mesh;
         }
-        cc.log(mesh.nativeUrl)
+        // cc.log(mesh.nativeUrl)
         this.mesh = mesh;
     }
 

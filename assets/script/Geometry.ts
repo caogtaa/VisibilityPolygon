@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-02-24 18:06:47
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-05 20:59:51
+ * LastEditTime: 2021-03-05 21:16:53
 */
 
 import Heap from "./Heap";
@@ -427,7 +427,7 @@ export default class Geometry {
         return this.VisibilityPolygonWithSegments(o, this.PolygonToSegments(polygon));
     }
 
-    // segments可以任意顺序
+    // segments可以任意顺序。要求输入的segments之间不相交（除了顶点）
     public static VisibilityPolygonWithSegments(o: cc.Vec2, segments: Segment[]): cc.Vec2[] {
         let segmentCmp = new SegmentComparator(o, segments);
         let heap = new Heap<number>(segmentCmp.Cmp.bind(segmentCmp));

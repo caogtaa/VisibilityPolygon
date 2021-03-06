@@ -2,9 +2,10 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-05 21:12:04
+ * LastEditTime: 2021-03-06 20:05:55
 */
 
+import VisibilityRenderer from "../shader/Visibility/VisibilityRenderer";
 import Geometry, { Segment } from "./Geometry";
 import MeshPolygonSprite from "./MeshPolygonSprite";
 
@@ -16,6 +17,9 @@ const { ccclass, property } = cc._decorator;
 export default class SceneMain extends cc.Component {
     @property(cc.Graphics)
     graphics: cc.Graphics = null;
+
+    @property(VisibilityRenderer)
+    visibilityRenderer: VisibilityRenderer = null;
 
     @property([MeshPolygonSprite])
     obstacles: MeshPolygonSprite[] = [];
@@ -151,17 +155,15 @@ export default class SceneMain extends cc.Component {
         let o = this.viewPoint.position;
         let visibility = Geometry.VisibilityPolygonWithSegments(o, segments);
 
-        let graphics = this.graphics;
-        graphics.clear();
-        this.DrawPolygon(visibility);
-        graphics.fill();
-
-        // graphics.fillColor = cc.Color.GREEN;
-        // this.DrawPolygon(result);
+        // graphics画法
+        // let graphics = this.graphics;
+        // graphics.clear();
+        // this.DrawPolygon(visibility);
         // graphics.fill();
 
-        // graphics.fillColor = cc.Color.RED;
-        // graphics.circle(position[0], position[1], 5);
-        // graphics.fill();
+        // shader画法
+
+        let renderer = this.visibilityRenderer;
+        renderer.SetPolygon(o, visibility);
     }
 }
