@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-06 20:05:55
+ * LastEditTime: 2021-03-07 19:15:43
 */
 
 import VisibilityRenderer from "../shader/Visibility/VisibilityRenderer";
@@ -30,9 +30,23 @@ export default class SceneMain extends cc.Component {
     @property(cc.Node)
     boundary: cc.Node = null;
 
+    @property(cc.Node)
+    btnCircleFOV: cc.Node = null;
+
+    @property(cc.Node)
+    btnUnlimitFOV: cc.Node = null;
+
     protected _epsilon: number = 1e-5;
 
     onLoad() {
+        let renderer = this.visibilityRenderer;
+        this.btnCircleFOV?.on("click", () => {
+            renderer?.SetCircleFOV(true);
+        });
+
+        this.btnUnlimitFOV?.on("click", () => {
+            renderer?.SetCircleFOV(false);
+        });
 
         // let vp = new VisibilityPolygon;
 

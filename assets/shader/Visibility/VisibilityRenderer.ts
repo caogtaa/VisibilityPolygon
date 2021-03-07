@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-03-06 19:05:00
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-06 19:35:47
+ * LastEditTime: 2021-03-07 19:06:11
 */
 
 import VisibilityAssembler from "./VisibilityAssembler";
@@ -26,7 +26,27 @@ export default class VisibilityRenderer extends cc.Sprite {
             assembler.polygon = polygon;
         }
 
+        let material = this.getMaterial(0);
+        if (material) {
+            let node: cc.Node = this.node;
+            let offsetX = node.width * node.anchorX;
+            let offsetY = node.height * node.anchorY;
+
+            // todo: 如果希望多个visibility polygon合批渲染，逻辑放入assembler
+            // origin: 观察点，世界坐标，坐标系和assembler里的pos对齐（目前采用屏幕中心为原点）
+            // radius: 可视半径，设计分辨率尺度
+            material.setProperty("origin", [origin.x + offsetX, origin.y + offsetY]);
+            material.setProperty("radius", 100.0);
+        }
+
         this.setVertsDirty();
+    }
+
+    public SetCircleFOV(value: boolean): void {
+        let material = this.getMaterial(0);
+        if (material) {
+            material.define("GT_CIRCLE_FOV", value);
+        }
     }
 
     // public SetParticles(particles) {

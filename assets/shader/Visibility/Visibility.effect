@@ -6,7 +6,7 @@
 /*
  * Date: 2020-07-13 02:44:17
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-06 20:07:38
+ * LastEditTime: 2021-03-07 19:06:19
 */ 
 
 CCEffect %{
@@ -30,11 +30,13 @@ CCProgram vs %{
   #include <cc-local>
 
   in vec3 a_position;
+  out vec2 v_pos;
 
   void main() {
     vec4 pos = vec4(a_position, 1);
-    pos = cc_matViewProj * pos;
+    v_pos = pos.xy;
 
+    pos = cc_matViewProj * pos;
     gl_Position = pos;
   }
 }%
@@ -46,11 +48,28 @@ CCProgram fs %{
   #include <cc-global>
   #include <cc-local>
 
+  in vec2 v_pos;
+  uniform UARGS {
+    vec2 origin;
+    float radius;
+  };
+
   uniform sampler2D texture;
+
+  float Circle(vec2 uv, vec2 origin, float r, float blur) {
+    float d = distance(uv, origin);
+    return smoothstep(r + blur, r - blur, d);
+  }
 
   void main()
   {
-    vec4 col = vec4(0., 1., 0., 1.);
+#if GT_CIRCLE_FOV
+    // 视野是圆形区域
+    float mask = Circle(v_pos, origin, radius, 1.);
+    vec4 col = vec4(0., 1., 0., mask);
+#else
+    vec4 col = vec4(0., 1., 0., 1.0);
+#endif
     gl_FragColor = col;
   }
 }%
