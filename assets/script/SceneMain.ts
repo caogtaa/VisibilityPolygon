@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2020-08-02 19:43:53
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-07 19:15:43
+ * LastEditTime: 2021-03-07 21:48:02
 */
 
 import VisibilityRenderer from "../shader/Visibility/VisibilityRenderer";
@@ -36,6 +36,9 @@ export default class SceneMain extends cc.Component {
     @property(cc.Node)
     btnUnlimitFOV: cc.Node = null;
 
+    @property(cc.Node)
+    btnRadar: cc.Node = null;
+
     protected _epsilon: number = 1e-5;
 
     onLoad() {
@@ -46,6 +49,12 @@ export default class SceneMain extends cc.Component {
 
         this.btnUnlimitFOV?.on("click", () => {
             renderer?.SetCircleFOV(false);
+        });
+
+        let enableRadar: boolean = false;
+        this.btnRadar?.on("click", () => {
+            enableRadar = !enableRadar;
+            renderer?.SetRadarRing(enableRadar);
         });
 
         // let vp = new VisibilityPolygon;
@@ -176,7 +185,6 @@ export default class SceneMain extends cc.Component {
         // graphics.fill();
 
         // shader画法
-
         let renderer = this.visibilityRenderer;
         renderer.SetPolygon(o, visibility);
     }

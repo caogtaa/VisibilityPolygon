@@ -2,7 +2,7 @@
  * Author: GT<caogtaa@gmail.com>
  * Date: 2021-03-06 19:05:00
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-03-07 19:06:11
+ * LastEditTime: 2021-03-07 21:46:04
 */
 
 import VisibilityAssembler from "./VisibilityAssembler";
@@ -36,16 +36,24 @@ export default class VisibilityRenderer extends cc.Sprite {
             // origin: 观察点，世界坐标，坐标系和assembler里的pos对齐（目前采用屏幕中心为原点）
             // radius: 可视半径，设计分辨率尺度
             material.setProperty("origin", [origin.x + offsetX, origin.y + offsetY]);
-            material.setProperty("radius", 100.0);
         }
 
         this.setVertsDirty();
     }
 
-    public SetCircleFOV(value: boolean): void {
+    public SetCircleFOV(value: boolean, radius: number = 100.0): void {
         let material = this.getMaterial(0);
         if (material) {
             material.define("GT_CIRCLE_FOV", value);
+            material.setProperty("radius", radius);
+        }
+    }
+
+    public SetRadarRing(value: boolean, radius: number = 360.0): void {
+        let material = this.getMaterial(0);
+        if (material) {
+            material.define("GT_RADAR_RING", value);
+            material.setProperty("radarRadius", radius);
         }
     }
 
