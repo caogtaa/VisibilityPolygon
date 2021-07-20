@@ -25,7 +25,7 @@ Planar Sight算法也是开源的，有兴趣的同学可以参考[Planar Sight]
 #### 参考资料
 * supersuraccoon大佬的[SSRLos库](https://gitee.com/supersuraccoon/ssrlos-cocoscreator_v2)，看了这个库后开始对实现产生兴趣
 * [CGAL](https://github.com/CGAL/cgal)，强大的计算几何算法库
-* [C++版sweep line实现](git@github.com:trylock/visibility.git)，实现部分的主要参考对象
+* [C++版sweep line实现](https://github.com/trylock/visibility)，实现部分的主要参考对象
 * T. Asano. An efficient algorithm for finding the visibility polygon for a polygonal region with holes. IEICE Transactions (1976-1990), (9):557–559, 1985.
 * Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and Alexander Kröller. Efficient computation of visibility polygons. CoRR, abs/1403.3905, 2014.
 * [Planar Sight实验报告](https://dsa.cs.tsinghua.edu.cn/~deng/cg/project/2015s/2015s-a.pdf)
